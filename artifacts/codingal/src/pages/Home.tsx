@@ -146,7 +146,7 @@ function Stats() {
   );
 }
 
-function WhyCodingal() {
+function WhyPraiseCodingAcademy() {
   const features = [
     {
       icon: <Video className="w-8 h-8 text-white" />,
@@ -178,7 +178,7 @@ function WhyCodingal() {
     <section className="py-24 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-3xl mx-auto mb-16">
-          <h2 className="text-4xl font-display font-bold text-gray-900 mb-6">Why Parents Choose Codingal</h2>
+          <h2 className="text-4xl font-display font-bold text-gray-900 mb-6">Why Parents Choose Praise Coding Academy</h2>
           <p className="text-xl text-gray-600">We don't just teach code. We teach logical thinking, problem-solving, and creativity.</p>
         </div>
 
@@ -336,7 +336,7 @@ function Testimonials() {
     {
       name: "Sarah Jenkins",
       role: "Parent of 8yr old",
-      content: "Codingal transformed my son's screen time into learning time. He built his own game in just 3 weeks and couldn't be prouder!",
+      content: "Praise Coding Academy transformed my son's screen time into learning time. He built his own game in just 3 weeks and couldn't be prouder!",
       img: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&h=150&fit=crop"
     },
     {
@@ -435,7 +435,7 @@ export default function Home() {
     <Layout>
       <Hero />
       <Stats />
-      <WhyCodingal />
+      <WhyPraiseCodingAcademy />
       <PopularCourses />
       <HowItWorks />
       <Testimonials />

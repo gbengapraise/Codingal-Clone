@@ -46,7 +46,7 @@ export function Navbar() {
                 />
               </div>
               <span className="text-2xl font-display font-bold text-gray-900 tracking-tight">
-                Codingal
+                Praise Coding Academy
               </span>
             </Link>
 

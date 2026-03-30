@@ -18,7 +18,7 @@ export function Footer() {
                 />
               </div>
               <span className="text-2xl font-display font-bold text-white tracking-tight">
-                Codingal
+                Praise Coding Academy
               </span>
             </Link>
             <p className="text-gray-400 mb-8 leading-relaxed max-w-sm">
@@ -85,7 +85,7 @@ export function Footer() {
         </div>
 
         <div className="border-t border-gray-800 pt-8 mt-12 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-gray-500">
-          <p>© {new Date().getFullYear()} Codingal. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} Praise Coding Academy. All rights reserved.</p>
           <div className="flex gap-6">
             <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
             <a href="#" className="hover:text-white transition-colors">Terms of Service</a>
