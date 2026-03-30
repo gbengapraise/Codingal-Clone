@@ -88,16 +88,22 @@ export function useCourses() {
 
 export function useSubmitBooking() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: async (data: { childName: string, parentEmail: string, phone: string, grade: string }) => {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      return { success: true, message: "Booking confirmed!" };
+    mutationFn: async (data: { childName: string; parentEmail: string; phone: string; grade: string }) => {
+      const res = await fetch("/api/bookings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error ?? "Booking failed. Please try again.");
+      }
+      return res.json();
     },
     onSuccess: () => {
-      // In a real app we'd invalidate bookings or user data
-      queryClient.invalidateQueries({ queryKey: ["courses"] });
-    }
+      queryClient.invalidateQueries({ queryKey: ["bookings"] });
+    },
   });
 }
