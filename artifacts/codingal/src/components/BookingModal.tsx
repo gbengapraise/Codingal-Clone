@@ -13,14 +13,14 @@ export function BookingModal() {
     childName: '',
     parentEmail: '',
     phone: '',
-    grade: 'Grade 1-4'
+    grade: ''
   });
 
   useEffect(() => {
     const handleOpen = () => {
       setIsOpen(true);
       setIsSuccess(false);
-      setFormData({ childName: '', parentEmail: '', phone: '', grade: 'Grade 1-4' });
+      setFormData({ childName: '', parentEmail: '', phone: '', grade: '' });
     };
     
     window.addEventListener(EVENTS.OPEN_BOOKING_MODAL, handleOpen);
@@ -129,13 +129,26 @@ export function BookingModal() {
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-1.5">Child's Grade</label>
                     <select
-                      className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                      required
+                      className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all appearance-none"
                       value={formData.grade}
                       onChange={e => setFormData({...formData, grade: e.target.value})}
                     >
-                      <option>Grade 1-4</option>
-                      <option>Grade 5-8</option>
-                      <option>Grade 9-12</option>
+                      <option value="" disabled>Select grade…</option>
+                      <option value="Pre-K">Pre-K</option>
+                      <option value="Kindergarten">Kindergarten</option>
+                      <option value="Grade 1">Grade 1</option>
+                      <option value="Grade 2">Grade 2</option>
+                      <option value="Grade 3">Grade 3</option>
+                      <option value="Grade 4">Grade 4</option>
+                      <option value="Grade 5">Grade 5</option>
+                      <option value="Grade 6">Grade 6</option>
+                      <option value="Grade 7">Grade 7</option>
+                      <option value="Grade 8">Grade 8</option>
+                      <option value="Grade 9">Grade 9</option>
+                      <option value="Grade 10">Grade 10</option>
+                      <option value="Grade 11">Grade 11</option>
+                      <option value="Grade 12">Grade 12</option>
                     </select>
                   </div>
 

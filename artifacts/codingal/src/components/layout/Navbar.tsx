@@ -1,8 +1,9 @@
 import { Link, useLocation } from "wouter";
-import { Menu, X, ChevronRight } from "lucide-react";
+import { Menu, X, ChevronRight, LayoutDashboard } from "lucide-react";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { openBookingModal } from "@/lib/events";
+import { useAuth } from "@/lib/auth";
 
 const NAV_LINKS = [
   { label: "Courses", href: "/courses" },
@@ -14,7 +15,8 @@ const NAV_LINKS = [
 export function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [location] = useLocation();
+  const [location, navigate] = useLocation();
+  const { student, logout } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
@@ -67,15 +69,38 @@ export function Navbar() {
 
             {/* CTA Buttons */}
             <div className="hidden md:flex items-center gap-4">
-              <button className="text-gray-600 font-semibold hover:text-primary transition-colors px-4 py-2">
-                Login
-              </button>
-              <button 
-                onClick={openBookingModal}
-                className="bg-secondary hover:bg-secondary/90 text-white px-6 py-2.5 rounded-full font-bold shadow-lg shadow-secondary/30 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200"
-              >
-                Book a Free Class
-              </button>
+              {student ? (
+                <>
+                  <button
+                    onClick={() => navigate(`/dashboard/${student.id}`)}
+                    className="flex items-center gap-2 text-gray-700 font-semibold hover:text-primary transition-colors px-4 py-2"
+                  >
+                    <LayoutDashboard className="w-4 h-4" />
+                    My Dashboard
+                  </button>
+                  <button
+                    onClick={() => { logout(); navigate("/"); }}
+                    className="text-gray-500 font-semibold hover:text-red-500 transition-colors px-3 py-2 text-sm"
+                  >
+                    Sign Out
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={() => navigate("/login")}
+                    className="text-gray-600 font-semibold hover:text-primary transition-colors px-4 py-2"
+                  >
+                    Login
+                  </button>
+                  <button
+                    onClick={openBookingModal}
+                    className="bg-secondary hover:bg-secondary/90 text-white px-6 py-2.5 rounded-full font-bold shadow-lg shadow-secondary/30 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200"
+                  >
+                    Book a Free Class
+                  </button>
+                </>
+              )}
             </div>
 
             {/* Mobile Menu Toggle */}

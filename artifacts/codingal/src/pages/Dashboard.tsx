@@ -9,13 +9,13 @@ import { useAuth, RequireAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 
 function DashboardContent() {
-  const { student, logout, getDashboardLink } = useAuth();
+  const { student, logout } = useAuth();
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const params = useParams<{ studentId: string }>();
 
   useEffect(() => {
-    if (student && params.studentId !== student.id) {
+    if (student && String(student.id) !== params.studentId) {
       navigate(`/dashboard/${student.id}`);
     }
   }, [student, params.studentId, navigate]);
@@ -55,7 +55,7 @@ function DashboardContent() {
 
             <div className="flex items-center gap-3">
               <img
-                src={student.avatar}
+                src={student.avatar ?? `https://ui-avatars.com/api/?name=${encodeURIComponent(student.name)}&background=e63946&color=fff`}
                 alt={student.name}
                 className="w-9 h-9 rounded-full object-cover ring-2 ring-primary/20"
               />
@@ -109,7 +109,7 @@ function DashboardContent() {
           <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-1">
             Welcome back, {student.name.split(" ")[0]}! 👋
           </h1>
-          <p className="text-gray-500">You joined in {student.joinedDate} · {student.grade}</p>
+          <p className="text-gray-500">Joined {student.joinedDate} · {student.grade}</p>
         </div>
 
         {/* Stats row */}
@@ -179,7 +179,7 @@ function DashboardContent() {
                       </div>
                       <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden mb-2">
                         <div
-                          className={`h-full ${course.color} rounded-full transition-all`}
+                          className={`h-full ${course.color} rounded-full`}
                           style={{ width: `${course.progress}%` }}
                         />
                       </div>
@@ -249,7 +249,7 @@ function DashboardContent() {
               )}
             </div>
 
-            {/* Quick tips */}
+            {/* Motivational card */}
             <div className="bg-gradient-to-br from-primary to-secondary rounded-2xl p-6 text-white">
               <div className="flex items-center gap-2 mb-3">
                 <Star className="w-5 h-5 fill-white" />
