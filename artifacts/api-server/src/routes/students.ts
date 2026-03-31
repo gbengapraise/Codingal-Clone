@@ -1,6 +1,7 @@
 import { Router, type IRouter } from "express";
 import { db, studentsTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { feedbackFormsTable } from "@workspace/db";
+import { eq, desc } from "drizzle-orm";
 
 const router: IRouter = Router();
 
@@ -195,6 +196,56 @@ router.delete("/students/:id", async (req, res) => {
   } catch (err) {
     req.log.error({ err }, "Failed to delete student");
     res.status(500).json({ error: "Failed to delete student" });
+  }
+});
+
+// ─── Student Feedback Submission ───────────────────────────────────────────
+
+// Student submits feedback (stored with category prefixed "from_student:")
+router.post("/students/:id/feedback", async (req, res) => {
+  try {
+    const studentId = parseInt(req.params.id, 10);
+    if (isNaN(studentId)) return res.status(400).json({ error: "Invalid student ID" });
+
+    const { title, message, category, rating } = req.body as {
+      title: string; message: string; category?: string; rating?: number;
+    };
+    if (!title || !message) return res.status(400).json({ error: "Title and message are required" });
+
+    const [form] = await db.insert(feedbackFormsTable).values({
+      studentId,
+      title,
+      message,
+      category: `from_student:${category ?? "general"}`,
+      rating: rating ?? null,
+      submittedAt: new Date(),
+    }).returning();
+
+    res.status(201).json({ success: true, form });
+  } catch (err) {
+    req.log.error({ err }, "Failed to submit student feedback");
+    res.status(500).json({ error: "Failed to submit feedback" });
+  }
+});
+
+// Get feedback received by student FROM admin (for dashboard display)
+router.get("/students/:id/feedback-received", async (req, res) => {
+  try {
+    const studentId = parseInt(req.params.id, 10);
+    if (isNaN(studentId)) return res.status(400).json({ error: "Invalid student ID" });
+
+    const forms = await db
+      .select()
+      .from(feedbackFormsTable)
+      .where(eq(feedbackFormsTable.studentId, studentId))
+      .orderBy(desc(feedbackFormsTable.createdAt));
+
+    // Split: admin-sent vs student-submitted
+    const received = forms.filter(f => !f.category.startsWith("from_student:"));
+    res.json(received);
+  } catch (err) {
+    req.log.error({ err }, "Failed to get feedback");
+    res.status(500).json({ error: "Failed to fetch feedback" });
   }
 });
 

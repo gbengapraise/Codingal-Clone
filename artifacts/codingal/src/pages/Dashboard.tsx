@@ -1,12 +1,33 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useLocation, Link } from "wouter";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   BookOpen, Trophy, Flame, Clock, Calendar, CheckCircle2,
-  Copy, ExternalLink, LogOut, ChevronRight, Star, Play, Award, Zap
+  Copy, ExternalLink, LogOut, ChevronRight, Star, Play, Award, Zap,
+  MessageSquare, Send, Loader2, ThumbsUp, Bell
 } from "lucide-react";
 import { useAuth, RequireAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
+
+function StarRating({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+  const [hover, setHover] = useState(0);
+  return (
+    <div className="flex gap-1">
+      {[1,2,3,4,5].map(n => (
+        <button
+          key={n}
+          type="button"
+          onClick={() => onChange(n)}
+          onMouseEnter={() => setHover(n)}
+          onMouseLeave={() => setHover(0)}
+          className="transition-transform hover:scale-110"
+        >
+          <Star className={`w-7 h-7 ${n <= (hover || value) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`} />
+        </button>
+      ))}
+    </div>
+  );
+}
 
 function DashboardContent() {
   const { student, logout } = useAuth();
@@ -14,11 +35,49 @@ function DashboardContent() {
   const { toast } = useToast();
   const params = useParams<{ studentId: string }>();
 
+  // Feedback form state
+  const [fbTitle, setFbTitle] = useState("");
+  const [fbMsg, setFbMsg] = useState("");
+  const [fbCategory, setFbCategory] = useState("class_quality");
+  const [fbRating, setFbRating] = useState(0);
+  const [fbSubmitting, setFbSubmitting] = useState(false);
+  const [fbSubmitted, setFbSubmitted] = useState(false);
+  const [receivedFeedback, setReceivedFeedback] = useState<any[]>([]);
+
   useEffect(() => {
     if (student && String(student.id) !== params.studentId) {
       navigate(`/dashboard/${student.id}`);
     }
   }, [student, params.studentId, navigate]);
+
+  // Load feedback received from admin
+  useEffect(() => {
+    if (!student) return;
+    fetch(`/api/students/${student.id}/feedback-received`)
+      .then(r => r.json())
+      .then(data => setReceivedFeedback(Array.isArray(data) ? data : []))
+      .catch(() => {});
+  }, [student?.id]);
+
+  const submitFeedback = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!student || !fbTitle.trim() || !fbMsg.trim()) return;
+    setFbSubmitting(true);
+    try {
+      await fetch(`/api/students/${student.id}/feedback`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: fbTitle, message: fbMsg, category: fbCategory, rating: fbRating || undefined }),
+      });
+      setFbSubmitted(true);
+      setFbTitle(""); setFbMsg(""); setFbRating(0); setFbCategory("class_quality");
+      toast({ title: "Feedback sent! 🙏", description: "Thank you — your teacher has received your feedback." });
+      setTimeout(() => setFbSubmitted(false), 4000);
+    } catch {
+      toast({ title: "Failed to send", description: "Please try again." });
+    }
+    setFbSubmitting(false);
+  };
 
   if (!student) return null;
 
@@ -316,7 +375,134 @@ function DashboardContent() {
                 <ChevronRight className="w-4 h-4" />
               </Link>
             </div>
+
+            {/* Feedback received from admin */}
+            {receivedFeedback.length > 0 && (
+              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                <div className="flex items-center gap-2 mb-4">
+                  <Bell className="w-5 h-5 text-primary" />
+                  <h2 className="text-base font-bold text-gray-900">Messages from Your Teacher</h2>
+                </div>
+                <div className="space-y-3">
+                  {receivedFeedback.slice(0, 3).map((fb: any, i: number) => (
+                    <div key={i} className="bg-primary/5 border border-primary/10 rounded-xl p-4">
+                      <div className="flex items-start justify-between gap-2 mb-1">
+                        <p className="font-bold text-gray-900 text-sm">{fb.title}</p>
+                        <span className="text-xs text-gray-400 shrink-0">{new Date(fb.createdAt).toLocaleDateString()}</span>
+                      </div>
+                      <p className="text-sm text-gray-600 leading-relaxed">{fb.message}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
+        </div>
+
+        {/* ── Student Feedback Form ── */}
+        <div className="mt-6 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="p-6 border-b border-gray-100 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+              <MessageSquare className="w-5 h-5 text-primary" />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-gray-900">Give Feedback</h2>
+              <p className="text-sm text-gray-500">Share your thoughts about your classes with your teacher</p>
+            </div>
+          </div>
+
+          <AnimatePresence mode="wait">
+            {fbSubmitted ? (
+              <motion.div
+                key="success"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0 }}
+                className="p-12 text-center"
+              >
+                <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
+                  <ThumbsUp className="w-8 h-8 text-green-500" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Thank you for your feedback!</h3>
+                <p className="text-gray-500 text-sm">Your teacher will review your comments soon.</p>
+              </motion.div>
+            ) : (
+              <motion.form
+                key="form"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onSubmit={submitFeedback}
+                className="p-6 space-y-5"
+              >
+                {/* Rating */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">How would you rate your class? <span className="text-gray-400 font-normal">(optional)</span></label>
+                  <StarRating value={fbRating} onChange={setFbRating} />
+                </div>
+
+                {/* Category */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Feedback Category</label>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    {[
+                      { key: "class_quality", label: "Class Quality" },
+                      { key: "teacher", label: "Teacher" },
+                      { key: "curriculum", label: "Curriculum" },
+                      { key: "technical", label: "Technical Issue" },
+                    ].map(opt => (
+                      <button
+                        key={opt.key}
+                        type="button"
+                        onClick={() => setFbCategory(opt.key)}
+                        className={`px-3 py-2 rounded-xl text-xs font-semibold border transition-all ${
+                          fbCategory === opt.key
+                            ? "bg-primary text-white border-primary shadow-sm"
+                            : "bg-gray-50 text-gray-600 border-gray-200 hover:border-primary/40 hover:text-primary"
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Title */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Subject <span className="text-red-400">*</span></label>
+                  <input
+                    required
+                    value={fbTitle}
+                    onChange={e => setFbTitle(e.target.value)}
+                    placeholder="e.g. Great class today!"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                  />
+                </div>
+
+                {/* Message */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Your Message <span className="text-red-400">*</span></label>
+                  <textarea
+                    required
+                    value={fbMsg}
+                    onChange={e => setFbMsg(e.target.value)}
+                    placeholder="Tell your teacher what you liked, what was challenging, or anything you'd like to improve..."
+                    rows={4}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all resize-none"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={fbSubmitting || !fbTitle.trim() || !fbMsg.trim()}
+                  className="flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-xl font-bold text-sm hover:bg-primary/90 shadow-md transition-all disabled:opacity-50"
+                >
+                  {fbSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                  {fbSubmitting ? "Sending…" : "Send Feedback"}
+                </button>
+              </motion.form>
+            )}
+          </AnimatePresence>
         </div>
       </main>
     </div>
