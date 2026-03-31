@@ -87,13 +87,6 @@ export function Navbar() {
                 </>
               ) : (
                 <>
-                  <Link
-                    href="/admin/login"
-                    className="flex items-center gap-1.5 text-gray-500 hover:text-primary transition-colors text-sm font-medium px-2 py-1.5"
-                  >
-                    <ShieldCheck className="w-4 h-4" />
-                    Admin
-                  </Link>
                   <button
                     onClick={() => navigate("/login")}
                     className="text-gray-600 font-semibold hover:text-primary transition-colors px-4 py-2"
