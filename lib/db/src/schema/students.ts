@@ -39,6 +39,8 @@ export const studentsTable = pgTable("students", {
   enrolledCourses: jsonb("enrolled_courses").$type<z.infer<typeof enrolledCourseSchema>[]>().notNull().default([]),
   certificates: jsonb("certificates").$type<z.infer<typeof certificateSchema>[]>().notNull().default([]),
   upcomingClasses: jsonb("upcoming_classes").$type<z.infer<typeof upcomingClassSchema>[]>().notNull().default([]),
+  badges: jsonb("badges").$type<{ id: string; name: string; description: string; icon: string; color: string; awardedAt: string }[]>().notNull().default([]),
+  learningCredits: integer("learning_credits").notNull().default(0),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
