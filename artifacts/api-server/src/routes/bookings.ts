@@ -145,23 +145,42 @@ router.post("/bookings", async (req, res) => {
 
     try {
       const resend = getResend();
-      await Promise.all([
-        resend.emails.send({
-          from: `Praise Coding Academy <${FROM_EMAIL}>`,
-          to: [parentEmail],
-          subject: `🎉 Free Trial Class Booked for ${childName}!`,
-          html: parentConfirmationHtml(childName, grade),
-        }),
-        resend.emails.send({
+
+      // Always send owner notification to OWNER_EMAIL
+      const ownerResult = await resend.emails.send({
+        from: `Praise Coding Academy <${FROM_EMAIL}>`,
+        to: [OWNER_EMAIL],
+        subject: `📚 New Booking: ${childName} (${grade})`,
+        html: ownerNotificationHtml(childName, parentEmail, phone, grade),
+      });
+
+      if (ownerResult.error) {
+        req.log.error({ error: ownerResult.error, to: OWNER_EMAIL }, "Owner notification email failed");
+      } else {
+        req.log.info({ id: ownerResult.data?.id, to: OWNER_EMAIL }, "Owner notification email sent");
+      }
+
+      // Try to send parent confirmation; if domain not verified, send copy to owner instead
+      const parentResult = await resend.emails.send({
+        from: `Praise Coding Academy <${FROM_EMAIL}>`,
+        to: [parentEmail],
+        subject: `🎉 Free Trial Class Booked for ${childName}!`,
+        html: parentConfirmationHtml(childName, grade),
+      });
+
+      if (parentResult.error) {
+        req.log.warn({ error: parentResult.error, to: parentEmail }, "Parent email blocked (no verified domain) — sending copy to owner");
+        await resend.emails.send({
           from: `Praise Coding Academy <${FROM_EMAIL}>`,
           to: [OWNER_EMAIL],
-          subject: `📚 New Booking: ${childName} (${grade})`,
-          html: ownerNotificationHtml(childName, parentEmail, phone, grade),
-        }),
-      ]);
-      req.log.info({ bookingId: booking.id }, "Booking emails sent");
+          subject: `[COPY for parent] 🎉 Free Trial Class Booked for ${childName}!`,
+          html: parentConfirmationHtml(childName, grade),
+        });
+      } else {
+        req.log.info({ id: parentResult.data?.id, to: parentEmail }, "Parent confirmation email sent");
+      }
     } catch (emailErr) {
-      req.log.error({ emailErr }, "Email sending failed (booking still saved)");
+      req.log.error({ emailErr }, "Email sending threw an exception");
     }
 
     res.status(201).json({ success: true, bookingId: booking.id });
