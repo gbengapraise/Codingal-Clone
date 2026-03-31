@@ -127,7 +127,9 @@ function StudentModal({ student, onClose, token }: { student: Student; onClose: 
   };
 
   // Credits
-  const [creditAmt, setCreditAmt] = useState(""); const [credits, setCredits] = useState(student.learningCredits ?? 0);
+  const [creditAmt, setCreditAmt] = useState("");
+  const [credits, setCredits] = useState(student.learningCredits ?? 0);
+  const [completedClasses, setCompletedClasses] = useState(student.completedClasses ?? 0);
   const addCredits = async () => {
     const amount = parseInt(creditAmt);
     if (isNaN(amount)) return;
@@ -137,6 +139,16 @@ function StudentModal({ student, onClose, token }: { student: Student; onClose: 
     setCredits(data.learningCredits);
     setCreditAmt("");
     toast({ title: `${amount > 0 ? "+" : ""}${amount} credits applied!` });
+    setLoading(false);
+  };
+  const markClassComplete = async () => {
+    if (credits <= 0) { toast({ title: "No credits remaining!", description: "Add more credits before marking a class complete." }); return; }
+    setLoading(true);
+    const res = await apiFetch(`/api/admin/students/${student.id}/complete-class`, "POST");
+    const data = await res.json();
+    setCredits(data.learningCredits);
+    setCompletedClasses(data.completedClasses);
+    toast({ title: "Class marked complete! ✅", description: `1 credit used. ${data.learningCredits} credits remaining.` });
     setLoading(false);
   };
 
@@ -329,15 +341,45 @@ function StudentModal({ student, onClose, token }: { student: Student; onClose: 
 
           {activeTab === "credits" && (
             <div className="space-y-4">
-              <div className="bg-gradient-to-br from-blue-500/20 to-purple-500/20 border border-blue-500/20 rounded-2xl p-6 text-center">
-                <Zap className="w-10 h-10 text-blue-400 mx-auto mb-2" />
-                <p className="text-4xl font-black text-white">{credits}</p>
-                <p className="text-gray-400 text-sm mt-1">Current Learning Credits</p>
+              {/* Credit summary */}
+              <div className="grid grid-cols-3 gap-3">
+                <div className="bg-gradient-to-br from-blue-500/20 to-purple-500/20 border border-blue-500/30 rounded-2xl p-4 text-center">
+                  <Zap className="w-6 h-6 text-blue-400 mx-auto mb-1" />
+                  <p className="text-3xl font-black text-white">{credits}</p>
+                  <p className="text-gray-400 text-xs mt-0.5">Credits Left</p>
+                </div>
+                <div className="bg-green-500/10 border border-green-500/20 rounded-2xl p-4 text-center">
+                  <CheckCircle2 className="w-6 h-6 text-green-400 mx-auto mb-1" />
+                  <p className="text-3xl font-black text-white">{completedClasses}</p>
+                  <p className="text-gray-400 text-xs mt-0.5">Classes Done</p>
+                </div>
+                <div className="bg-orange-500/10 border border-orange-500/20 rounded-2xl p-4 text-center">
+                  <Star className="w-6 h-6 text-orange-400 mx-auto mb-1" />
+                  <p className="text-3xl font-black text-white">{credits + completedClasses}</p>
+                  <p className="text-gray-400 text-xs mt-0.5">Total Given</p>
+                </div>
               </div>
+
+              {/* Mark class complete */}
               <div className="bg-gray-800 rounded-2xl p-4 space-y-3">
-                <h3 className="text-white font-semibold text-sm">Add / Deduct Credits</h3>
-                <input className={inputCls} type="number" placeholder="Amount (use negative to deduct, e.g. -50)" value={creditAmt} onChange={e => setCreditAmt(e.target.value)} />
-                <button onClick={addCredits} disabled={loading || !creditAmt} className={btnCls}><Zap className="w-4 h-4" />Apply Credits</button>
+                <h3 className="text-white font-semibold text-sm">Mark a Class Complete</h3>
+                <p className="text-gray-400 text-xs">After each completed class, 1 credit is deducted automatically.</p>
+                <button
+                  onClick={markClassComplete}
+                  disabled={loading || credits <= 0}
+                  className="w-full py-3 rounded-xl font-bold text-sm bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:opacity-90 transition-all flex items-center justify-center gap-2 disabled:opacity-40"
+                >
+                  <CheckCircle2 className="w-4 h-4" />
+                  {credits <= 0 ? "No Credits Remaining" : "Mark Class as Complete (−1 Credit)"}
+                </button>
+              </div>
+
+              {/* Add credits */}
+              <div className="bg-gray-800 rounded-2xl p-4 space-y-3">
+                <h3 className="text-white font-semibold text-sm">Give Credits (= Schedule Classes)</h3>
+                <p className="text-gray-400 text-xs">Enter the number of classes being scheduled — each class = 1 credit.</p>
+                <input className={inputCls} type="number" placeholder="e.g. 40 for a 40-class package" value={creditAmt} onChange={e => setCreditAmt(e.target.value)} />
+                <button onClick={addCredits} disabled={loading || !creditAmt} className={btnCls}><Zap className="w-4 h-4" />Give Credits</button>
               </div>
             </div>
           )}

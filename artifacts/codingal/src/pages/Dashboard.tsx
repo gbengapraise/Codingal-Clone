@@ -3,7 +3,7 @@ import { useParams, useLocation, Link } from "wouter";
 import { motion } from "framer-motion";
 import {
   BookOpen, Trophy, Flame, Clock, Calendar, CheckCircle2,
-  Copy, ExternalLink, LogOut, ChevronRight, Star, Play, Award
+  Copy, ExternalLink, LogOut, ChevronRight, Star, Play, Award, Zap
 } from "lucide-react";
 import { useAuth, RequireAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -105,12 +105,62 @@ function DashboardContent() {
         </motion.div>
 
         {/* Welcome + Stats */}
-        <div className="mb-8">
+        <div className="mb-6">
           <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-1">
             Welcome back, {student.name.split(" ")[0]}! 👋
           </h1>
           <p className="text-gray-500">Joined {student.joinedDate} · {student.grade}</p>
         </div>
+
+        {/* ── Credits Banner ── */}
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
+          className="mb-6 rounded-2xl overflow-hidden shadow-md"
+        >
+          <div className="bg-gradient-to-r from-primary to-secondary p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center shrink-0">
+                <Zap className="w-7 h-7 text-white" />
+              </div>
+              <div>
+                <p className="text-white/80 text-sm font-semibold uppercase tracking-wide">Class Credits</p>
+                <p className="text-white text-4xl font-black leading-none">{student.learningCredits ?? 0}</p>
+                <p className="text-white/70 text-xs mt-1">credits remaining</p>
+              </div>
+            </div>
+            <div className="flex gap-6 sm:text-right">
+              <div>
+                <p className="text-white text-2xl font-black">{student.completedClasses}</p>
+                <p className="text-white/70 text-xs">classes done</p>
+              </div>
+              <div className="w-px bg-white/20 hidden sm:block" />
+              <div>
+                <p className="text-white text-2xl font-black">{(student.learningCredits ?? 0) + student.completedClasses}</p>
+                <p className="text-white/70 text-xs">total credited</p>
+              </div>
+            </div>
+          </div>
+          {/* Progress bar: credits used / total */}
+          {(() => {
+            const total = (student.learningCredits ?? 0) + student.completedClasses;
+            const pct = total > 0 ? Math.round((student.completedClasses / total) * 100) : 0;
+            return (
+              <div className="bg-gray-900 px-5 py-3 flex items-center gap-3">
+                <div className="flex-1 h-2 bg-gray-700 rounded-full overflow-hidden">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${pct}%` }}
+                    transition={{ duration: 1, ease: "easeOut" }}
+                    className="h-full bg-gradient-to-r from-primary to-secondary rounded-full"
+                  />
+                </div>
+                <span className="text-xs text-gray-400 font-semibold shrink-0">{pct}% used</span>
+              </div>
+            );
+          })()}
+        </motion.div>
 
         {/* Stats row */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">

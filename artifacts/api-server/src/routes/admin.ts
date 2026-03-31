@@ -143,6 +143,30 @@ router.post("/admin/students/:id/credits", requireAdminSession, async (req, res)
   res.json({ success: true, learningCredits: newCredits });
 });
 
+// Mark a class as completed: increments completedClasses, deducts 1 credit
+router.post("/admin/students/:id/complete-class", requireAdminSession, async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  const [student] = await db.select({
+    completedClasses: studentsTable.completedClasses,
+    totalClasses: studentsTable.totalClasses,
+    learningCredits: studentsTable.learningCredits,
+  }).from(studentsTable).where(eq(studentsTable.id, id));
+
+  if (!student) return res.status(404).json({ error: "Student not found" });
+
+  const newCompleted = (student.completedClasses ?? 0) + 1;
+  const currentCredits = student.learningCredits ?? 0;
+  const newCredits = Math.max(0, currentCredits - 1);
+
+  await db.update(studentsTable).set({
+    completedClasses: newCompleted,
+    learningCredits: newCredits,
+    updatedAt: new Date(),
+  }).where(eq(studentsTable.id, id));
+
+  res.json({ success: true, completedClasses: newCompleted, learningCredits: newCredits });
+});
+
 // ─── Projects ──────────────────────────────────────────────────────────────
 
 router.post("/admin/students/:id/projects", requireAdminSession, async (req, res) => {
